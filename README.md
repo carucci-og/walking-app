@@ -1,5 +1,15 @@
 # StepStack Walk Trainer – Changelog
 
+## v1.2.0 – April 23, 2025
+
+### 🚧 Week Layout & Progress Graph
+- Introduced a **weekday-style layout** for each week’s goals, giving a calendar-like view.
+- Added an **overall progress graph** (horizontal bar chart) to visualize total walk progress.
+- **Fixed current week highlighting** so the active week is correctly displayed.
+- Updated UI styling for cleaner layout and improved user experience.
+
+---
+
 ## v1.1.0 – April 23, 2025
 
 ### ✨ Visual Redesign & UX Improvements
