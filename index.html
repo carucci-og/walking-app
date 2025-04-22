@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>StepStack - 80K Walk Trainer</title>
+  <title>StrideTrack - 80K Walk Challenge</title>
   <style>
     body {
       font-family: 'Segoe UI', sans-serif;
@@ -19,11 +19,16 @@
       margin-bottom: 10px;
     }
 
-    .current-week-display {
-      text-align: center;
-      margin-bottom: 20px;
-      font-size: 1.2em;
-      color: #555;
+    .current-week-badge {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background: #42a5f5;
+      color: white;
+      padding: 6px 12px;
+      border-radius: 50px;
+      font-weight: bold;
+      font-size: 0.9em;
     }
 
     .week {
@@ -32,10 +37,23 @@
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
       padding: 15px;
       margin-bottom: 15px;
+      position: relative;
     }
 
-    .week.current {
-      border: 2px solid #42a5f5;
+    .reset-button {
+      position: absolute;
+      top: 15px;
+      right: 15px;
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      font-size: 1.1em;
+      color: #888;
+      transition: color 0.2s;
+    }
+
+    .reset-button:hover {
+      color: #e53935;
     }
 
     .week-title {
@@ -72,20 +90,36 @@
 
     .checklist {
       display: flex;
-      gap: 10px;
+      gap: 8px;
       margin-top: 10px;
       flex-wrap: wrap;
     }
 
-    .checklist input {
-      transform: scale(1.3);
+    .checklist button {
+      background: #ffffff;
+      border: 2px solid #42a5f5;
+      color: #42a5f5;
+      padding: 6px 10px;
+      border-radius: 10px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .checklist button.active {
+      background: #42a5f5;
+      color: white;
+    }
+
+    .checklist button:hover {
+      opacity: 0.9;
     }
   </style>
 </head>
 <body>
 
-  <h1>StepStack: 80K Walk Training</h1>
-  <div class="current-week-display" id="current-week-label"></div>
+  <h1>StrideTrack: 80K Walk Challenge</h1>
+  <div class="current-week-badge" id="current-week-label"></div>
   <div id="weeks"></div>
 
   <script>
@@ -110,55 +144,11 @@
       return Math.ceil((((date - yearStart) / 86400000) + 1) / 7);
     };
 
-    const currentWeekNumber = new Date().getWeek(); // ✅ Now it's safe
-
+    const currentWeekNumber = new Date().getWeek();
     const saved = JSON.parse(localStorage.getItem("stepstack-data") || "{}");
 
     function saveProgress() {
       localStorage.setItem("stepstack-data", JSON.stringify(saved));
-    }
-
-    function renderWeeks() {
-      const container = document.getElementById("weeks");
-      container.innerHTML = "";
-
-      weeks.forEach((w) => {
-        const isCurrent = currentWeekNumber === w.week;
-        const totalGoal = w.shortWalks * w.shortDist + w.longWalk;
-
-        const shortCompleted = Object.keys(saved)
-          .filter(k => k.startsWith(`w${w.week}-s`) && saved[k])
-          .length;
-
-        const longCompleted = saved[`w${w.week}-long`] ? 1 : 0;
-        const doneKm = shortCompleted * w.shortDist + (longCompleted * w.longWalk);
-        const percent = Math.round((doneKm / totalGoal) * 100);
-
-        const weekBox = document.createElement("div");
-        weekBox.className = `week${isCurrent ? " current" : ""}`;
-
-        weekBox.innerHTML = `
-          <div class="week-title">Week ${w.week}</div>
-          <div class="week-description">${w.shortWalks} × ${w.shortDist} km short walks + ${w.longWalk} km long walk</div>
-          <div class="progress-container">
-            <div class="progress-bar" style="width: ${percent}%"></div>
-          </div>
-          <div class="progress-text">${doneKm} km / ${totalGoal} km — ${percent}% complete</div>
-          <div class="checklist">
-            ${[...Array(w.shortWalks)].map((_, j) => {
-              const id = `w${w.week}-s${j}`;
-              const checked = saved[id] ? "checked" : "";
-              return `<label>S${j + 1} <input type="checkbox" title="Short walk ${j + 1}" ${checked} onchange="handleCheck('${id}', ${w.week})" /></label>`;
-            }).join("")}
-            <label>Long <input type="checkbox" title="Long walk" ${longCompleted ? "checked" : ""} onchange="handleLong(${w.week})" /></label>
-          </div>
-        `;
-
-        container.appendChild(weekBox);
-      });
-
-      document.getElementById("current-week-label").innerText =
-        `This is calendar week ${currentWeekNumber}`;
     }
 
     function handleCheck(id, week) {
@@ -172,6 +162,56 @@
       saved[key] = !saved[key];
       saveProgress();
       renderWeeks();
+    }
+
+    function resetWeek(week) {
+      Object.keys(saved).forEach((key) => {
+        if (key.startsWith(`w${week}-`)) delete saved[key];
+      });
+      saveProgress();
+      renderWeeks();
+    }
+
+    function renderWeeks() {
+      document.getElementById("current-week-label").innerText = `WK${currentWeekNumber}`;
+
+      const container = document.getElementById("weeks");
+      container.innerHTML = "";
+
+      weeks.forEach((w) => {
+        const isCurrent = currentWeekNumber === w.week;
+        const totalGoal = w.shortWalks * w.shortDist + w.longWalk;
+
+        const shortCompleted = Object.keys(saved)
+          .filter(k => k.startsWith(`w${w.week}-s`) && saved[k])
+          .length;
+        const longCompleted = saved[`w${w.week}-long`] ? 1 : 0;
+        const doneKm = shortCompleted * w.shortDist + (longCompleted * w.longWalk);
+        const percent = Math.round((doneKm / totalGoal) * 100);
+
+        const weekBox = document.createElement("div");
+        weekBox.className = `week${isCurrent ? " current" : ""}`;
+
+        weekBox.innerHTML = `
+          <button class="reset-button" onclick="resetWeek(${w.week})" title="Reset week">&#x21bb;</button>
+          <div class="week-title">Week ${w.week}</div>
+          <div class="week-description">${w.shortWalks} × ${w.shortDist} km short walks + ${w.longWalk} km long walk</div>
+          <div class="progress-container">
+            <div class="progress-bar" style="width: ${percent}%"></div>
+          </div>
+          <div class="progress-text">${doneKm} km / ${totalGoal} km — ${percent}% complete</div>
+          <div class="checklist">
+            ${[...Array(w.shortWalks)].map((_, j) => {
+              const id = `w${w.week}-s${j}`;
+              const active = saved[id] ? "active" : "";
+              return `<button class="${active}" onclick="handleCheck('${id}', ${w.week})">${w.shortDist}K</button>`;
+            }).join("")}
+            <button class="${longCompleted ? "active" : ""}" onclick="handleLong(${w.week})">${w.longWalk}K</button>
+          </div>
+        `;
+
+        container.appendChild(weekBox);
+      });
     }
 
     renderWeeks();
