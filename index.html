@@ -86,7 +86,6 @@
 
   <h1>StepStack: 80K Walk Training</h1>
   <div class="current-week-display" id="current-week-label"></div>
-
   <div id="weeks"></div>
 
   <script>
@@ -102,7 +101,16 @@
       { week: 25, shortWalks: 4, shortDist: 6, longWalk: 40 },
     ];
 
-    const currentWeekNumber = new Date().getWeek();
+    // Helper to get calendar week number
+    Date.prototype.getWeek = function () {
+      const date = new Date(this.getFullYear(), this.getMonth(), this.getDate());
+      const dayNum = date.getDay() || 7;
+      date.setDate(date.getDate() + 4 - dayNum);
+      const yearStart = new Date(date.getFullYear(), 0, 1);
+      return Math.ceil((((date - yearStart) / 86400000) + 1) / 7);
+    };
+
+    const currentWeekNumber = new Date().getWeek(); // ✅ Now it's safe
 
     const saved = JSON.parse(localStorage.getItem("stepstack-data") || "{}");
 
@@ -140,9 +148,9 @@
             ${[...Array(w.shortWalks)].map((_, j) => {
               const id = `w${w.week}-s${j}`;
               const checked = saved[id] ? "checked" : "";
-              return `<label><input type="checkbox" ${checked} onchange="handleCheck('${id}', ${w.week})" /></label>`;
+              return `<label>S${j + 1} <input type="checkbox" title="Short walk ${j + 1}" ${checked} onchange="handleCheck('${id}', ${w.week})" /></label>`;
             }).join("")}
-            <label>Long <input type="checkbox" ${longCompleted ? "checked" : ""} onchange="handleLong(${w.week})" /></label>
+            <label>Long <input type="checkbox" title="Long walk" ${longCompleted ? "checked" : ""} onchange="handleLong(${w.week})" /></label>
           </div>
         `;
 
@@ -165,15 +173,6 @@
       saveProgress();
       renderWeeks();
     }
-
-    // Helper to get calendar week number
-    Date.prototype.getWeek = function () {
-      const date = new Date(this.getFullYear(), this.getMonth(), this.getDate());
-      const dayNum = date.getDay() || 7;
-      date.setDate(date.getDate() + 4 - dayNum);
-      const yearStart = new Date(date.getFullYear(), 0, 1);
-      return Math.ceil((((date - yearStart) / 86400000) + 1) / 7);
-    };
 
     renderWeeks();
   </script>
