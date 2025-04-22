@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>StepStack - 80K Walk Trainer</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #f4f7f9;
+      margin: 0;
+      padding: 20px;
+      color: #333;
+    }
+
+    h1 {
+      text-align: center;
+      color: #2c3e50;
+    }
+
+    .week {
+      background: white;
+      border-radius: 15px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+      padding: 15px;
+      margin-bottom: 15px;
+    }
+
+    .week-title {
+      font-weight: bold;
+      margin-bottom: 10px;
+    }
+
+    .progress-container {
+      background: #e0e0e0;
+      border-radius: 10px;
+      height: 20px;
+      overflow: hidden;
+    }
+
+    .progress-bar {
+      background: linear-gradient(to right, #42a5f5, #66bb6a);
+      height: 100%;
+      width: 0%;
+      transition: width 0.3s ease-in-out;
+    }
+
+    .checklist {
+      display: flex;
+      gap: 10px;
+      margin-top: 10px;
+      flex-wrap: wrap;
+    }
+
+    .checklist input {
+      transform: scale(1.3);
+    }
+
+    .stats {
+      font-size: 0.9em;
+      color: #555;
+      margin-top: 8px;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>StepStack: 80K Walk Training</h1>
+
+  <div id="weeks"></div>
+
+  <script>
+    const weeks = [
+      { week: 17, shortWalks: 4, shortDist: 5, longWalk: 10 },
+      { week: 18, shortWalks: 4, shortDist: 5, longWalk: 12 },
+      { week: 19, shortWalks: 4, shortDist: 6, longWalk: 14 },
+      { week: 20, shortWalks: 4, shortDist: 6, longWalk: 16 },
+      { week: 21, shortWalks: 4, shortDist: 7, longWalk: 18 },
+      { week: 22, shortWalks: 4, shortDist: 7, longWalk: 20 },
+      { week: 23, shortWalks: 4, shortDist: 8, longWalk: 22 },
+      { week: 24, shortWalks: 4, shortDist: 8, longWalk: 24 },
+      { week: 25, shortWalks: 4, shortDist: 6, longWalk: 40 },
+    ];
+
+    const saved = JSON.parse(localStorage.getItem("stepstack-data") || "{}");
+
+    function saveProgress() {
+      localStorage.setItem("stepstack-data", JSON.stringify(saved));
+    }
+
+    function renderWeeks() {
+      const container = document.getElementById("weeks");
+      container.innerHTML = "";
+
+      weeks.forEach((w, i) => {
+        const totalGoal = w.shortWalks * w.shortDist + w.longWalk;
+        const doneShort = saved[`w${w.week}-short`] || 0;
+        const doneLong = saved[`w${w.week}-long`] ? 1 : 0;
+        const doneKm = doneShort * w.shortDist + (doneLong * w.longWalk);
+        const percent = Math.round((doneKm / totalGoal) * 100);
+
+        const weekBox = document.createElement("div");
+        weekBox.className = "week";
+
+        weekBox.innerHTML = `
+          <div class="week-title">Week ${w.week}</div>
+          <div class="progress-container">
+            <div class="progress-bar" style="width: ${percent}%;"></div>
+          </div>
+          <div class="stats">${doneKm} km / ${totalGoal} km</div>
+          <div class="checklist">
+            ${[...Array(w.shortWalks)].map((_, j) => {
+              const id = `w${w.week}-s${j}`;
+              const checked = saved[id] ? "checked" : "";
+              return `<label><input type="checkbox" ${checked} onchange="handleCheck('${id}', ${w.week})" /></label>`;
+            }).join("")}
+            <label>Long <input type="checkbox" ${doneLong ? "checked" : ""} onchange="handleLong(${w.week})" /></label>
+          </div>
+        `;
+
+        container.appendChild(weekBox);
+      });
+    }
+
+    function handleCheck(id, week) {
+      saved[id] = !saved[id];
+      const shortChecked = Object.keys(saved).filter(k => k.startsWith(`w${week}-s`) && saved[k]).length;
+      saved[`w${week}-short`] = shortChecked;
+      saveProgress();
+      renderWeeks();
+    }
+
+    function handleLong(week) {
+      const key = `w${week}-long`;
+      saved[key] = !saved[key];
+      saveProgress();
+      renderWeeks();
+    }
+
+    renderWeeks();
+  </script>
+</body>
+</html>
